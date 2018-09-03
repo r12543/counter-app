@@ -1,7 +1,9 @@
 import React, { Component } from "react";
+import Eos from "eosjs";
 import NavBar from "./components/navbar";
 import Counters from "./components/counters";
 import "./App.css";
+import { checkServer } from "./utils/index.js";
 
 class App extends Component {
   state = {
@@ -11,6 +13,41 @@ class App extends Component {
       { id: 3, value: 0 },
       { id: 4, value: 0 }
     ]
+  };
+
+  componentDidMount() {
+    if (!checkServer()) {
+      if (window.scatter) this.onScatterLoad();
+      else document.addEventListener(`scatterLoaded`, this.onScatterLoad);
+    }
+  }
+
+  componentWillUnmount() {
+    if (!checkServer()) {
+      document.removeEventListener(`scatterLoaded`, this.onScatterLoad);
+    }
+  }
+
+  onScatterLoad = () => {
+    const scatter = window.scatter;
+    window.scatter = null;
+    // this.props.scatterLoadedAction(scatter);
+    const network = {
+      blockchain: "eos",
+      host: "0.0.0.0",
+      port: 7777
+    };
+    const eosOptions = {};
+
+    const eos = scatter.eos(network, Eos.Localnet, eosOptions);
+    scatter
+      .getIdentity()
+      .then(identity => {
+        console.log(identity);
+      })
+      .catch(error => {
+        console.log(error);
+      });
   };
 
   handleIncrement = counter => {
